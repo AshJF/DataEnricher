@@ -39,10 +39,21 @@ def get_lei_info(lei_list):
     api = "https://api.gleif.org/api/v1/lei-records"
     param_string = ", ".join(lei_list)
     query_params = {"filter[lei]": f"{param_string}"}
-    
-    response = requests.get(api, params=query_params).json()
+    retries = 3
 
-    return response
+    for i in range(retries):
+        try:
+            response = requests.get(api, params=query_params, timeout=30)
+            response.raise_for_status()
+            return response
+
+        except requests.exceptions.RequestException as err:
+            print(f"Attempt {i + 1} Error :", err)
+
+    else:
+        print("All retry attempts have failed. Exiting the program.")
+        raise SystemExit()
+
 
 def main(file_name):
     """
@@ -59,7 +70,7 @@ def main(file_name):
     response = get_lei_info(data['lei'].unique())
 
     print("Begin Enrichment.")
-    data = data.apply(run_enrichment, args=[response["data"]], axis=1)
+    data = data.apply(run_enrichment, args=[response.json()["data"]], axis=1)
     print("Enrichment Completed.")
 
     data.to_csv("Output.csv", index=False)
