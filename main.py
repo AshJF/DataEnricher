@@ -54,7 +54,6 @@ def get_lei_info(lei_list):
         print("All retry attempts have failed. Exiting the program.")
         raise SystemExit()
 
-
 def main(file_name):
     """
     Main Function.
